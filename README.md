@@ -22,3 +22,10 @@ wf.addWaveformListener(new WaveformListener(){
 wf.setMediaFile("your/path/to/media/to/view/in/the/waveform");
 wf.get(0L, 10000L, 800, 200, Waveform.SearchMode.Absolute);
 ```
+The last function 'get' has the following features:
+
+| ABSOLUTE | RELATIVE |
+| ---- | ---- |
+| msStart, msStop, imageWidth, imageHeight | msStartRel, msDuration, imageWidth, imageHeight |
+
+If RELATIVE, 'msStartRel' is calculated from last msStart position.

@@ -29,3 +29,8 @@ The last function 'get' has the following features:
 | msStart, msStop, imageWidth, imageHeight | msStartRel, msDuration, imageWidth, imageHeight |
 
 If RELATIVE, 'msStartRel' is calculated from last msStart position.
+
+| Example: (Gin & Juice.m4a from 0s to 10s) |
+| ---- |
+| ![Gin & Juice.m4a from 0s to 10s.](https://github.com/TW2/signal/blob/main/data/essai.png) |
+

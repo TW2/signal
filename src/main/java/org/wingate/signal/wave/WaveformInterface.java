@@ -21,5 +21,5 @@ package org.wingate.signal.wave;
  * @author util2
  */
 public interface WaveformInterface {
-    public void getImage(ImageEvent event);
+    public void getImage(WaveformImageEvent event);
 }

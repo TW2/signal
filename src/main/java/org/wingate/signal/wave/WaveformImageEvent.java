@@ -22,12 +22,12 @@ import java.awt.image.BufferedImage;
  *
  * @author util2
  */
-public class ImageEvent {
+public class WaveformImageEvent {
     private final int width;
     private final int height;
     private final BufferedImage image;
 
-    public ImageEvent(int width, int height, BufferedImage image) {
+    public WaveformImageEvent(int width, int height, BufferedImage image) {
         this.width = width;
         this.height = height;
         this.image = image;

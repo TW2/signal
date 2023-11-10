@@ -172,7 +172,7 @@ public class Waveform implements Runnable {
         grabber.release();
         
         // Send to user by event listener
-        fireWaveformImage(new ImageEvent(w, h, image));
+        fireWaveformImage(new WaveformImageEvent(w, h, image));
     }
     
     private double getX(long msStart, long msStop, int width, long msCurrent){
@@ -336,7 +336,7 @@ public class Waveform implements Runnable {
         return listeners.getListenerList();
     }
     
-    protected void fireWaveformImage(ImageEvent event){
+    protected void fireWaveformImage(WaveformImageEvent event){
         for(Object o : getListeners()){
             if(o instanceof WaveformListener listen){
                 listen.getImage(event);

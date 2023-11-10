@@ -11,7 +11,7 @@ To generate piece of waveform use Waveform class and listener like this:
 Waveform wf = new Waveform();
 wf.addWaveformListener(new WaveformListener(){
     @Override
-    public void getImage(ImageEvent event) {
+    public void getImage(WaveformImageEvent event) {
         try {
             ImageIO.write(event.getImage(), "png", new File("your/path/to/png"));
         } catch (IOException ex) {

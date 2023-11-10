@@ -81,8 +81,8 @@ public class Waveform implements Runnable {
      * @param sm mode that can be ABSOLUTE or RELATIVE
      */
     public void get(long ms1, long ms2, int width, int height, SearchMode sm){
-        long from = Math.min(ms1, ms2);
-        long to = Math.max(ms1, ms2);
+        long from = ms1;
+        long to = ms2;
         
         if(sm == SearchMode.Relative){
             from = msLastStart + from;

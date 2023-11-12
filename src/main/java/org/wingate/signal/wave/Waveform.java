@@ -29,17 +29,14 @@ import javax.sound.sampled.AudioFormat;
 import javax.swing.event.EventListenerList;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
+import org.wingate.signal.SearchMode;
 
 /**
  *
  * @author util2
  */
 public class Waveform implements Runnable {
-    
-    public enum SearchMode {
-        Absolute, Relative;
-    }
-    
+        
     private String path;    
     private volatile Thread execThread;
     private volatile boolean inExecution = false;
@@ -224,48 +221,6 @@ public class Waveform implements Runnable {
                     int MSB = (int)samples[2*i+1];
                     int value = MSB << 8 | (255 & LSB);
                     byte b = (byte)(128 * value / 32768);
-                    
-                    // Dessin
-                    double positionInSeconds = (elapsed + i+1) / Math.max(1L, format.getFrameSize() * format.getFrameRate());
-                    long msCurrent = Math.round(positionInSeconds * 1000L);
-                    x = getX(msStart, msStop, width, msCurrent);
-                    y = height * (128 - b) / 256;
-                    Line2D shape = new Line2D.Double(x, height/2, x, y);
-                    g.setColor(Color.red);
-                    g.draw(shape);
-                    
-                    // Is the end?
-                    if(isEnd(format, elapsed, i+1)){
-                        break;
-                    }
-                }
-            }
-        }else if(format.getSampleSizeInBits() == 8){
-            // en mono (8)
-            // On obtient le nombre de données à traiter
-            int samplesLength = samples.length;
-            
-            if(format.getEncoding().toString().toLowerCase().startsWith("pcm_sign")){
-                for(int i=0; i<samplesLength; i++){
-                    byte b = (byte)samples[i];
-                    
-                    // Dessin
-                    double positionInSeconds = (elapsed + i+1) / Math.max(1L, format.getFrameSize() * format.getFrameRate());
-                    long msCurrent = Math.round(positionInSeconds * 1000L);
-                    x = getX(msStart, msStop, width, msCurrent);
-                    y = height * (128 - b) / 256;
-                    Line2D shape = new Line2D.Double(x, height/2, x, y);
-                    g.setColor(Color.red);
-                    g.draw(shape);
-                    
-                    // Is the end?
-                    if(isEnd(format, elapsed, i+1)){
-                        break;
-                    }
-                }
-            }else{
-                for(int i=0; i<samplesLength; i++){
-                    byte b = (byte)(samples[i] - 128);
                     
                     // Dessin
                     double positionInSeconds = (elapsed + i+1) / Math.max(1L, format.getFrameSize() * format.getFrameRate());

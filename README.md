@@ -20,7 +20,7 @@ wf.addWaveformListener(new WaveformListener(){
     }        
 });
 wf.setMediaFile("your/path/to/media/to/view/in/the/waveform");
-wf.get(0L, 10000L, 800, 200, Waveform.SearchMode.Absolute);
+wf.get(0L, 10000L, 800, 200, SearchMode.Absolute);
 ```
 The last function 'get' has the following features:
 
@@ -30,7 +30,25 @@ The last function 'get' has the following features:
 
 If RELATIVE, 'msStartRel' is calculated from last 'msStart' position.
 
+To generate piece of spectrogram use Spectrogram class and listener like this:
+```java
+Spectrogram sp = new Spectrogram();
+sp.addSpectrogramListener(new SpectrogramListener(){
+    @Override
+    public void getImage(SpectrogramImageEvent event) {
+        try {
+            ImageIO.write(event.getImage(), "png", new File("your/path/to/png"));
+        } catch (IOException ex) {
+            Logger.getLogger(Signal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }        
+});
+sp.setMediaFile("your/path/to/media/to/view/in/the/spectrogram");
+sp.get(0L, 10000L, 800, 260, SearchMode.Absolute);
+```
+
 | Example: (Gin & Juice.m4a from 0s to 10s) |
 | ---- |
 | ![Gin & Juice.m4a from 0s to 10s.](https://github.com/TW2/signal/blob/main/data/essai.png) |
+| ![Gin & Juice.m4a from 0s to 10s.](https://github.com/TW2/signal/blob/main/data/essai2.png) |
 

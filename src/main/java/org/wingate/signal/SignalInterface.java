@@ -14,34 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.wingate.signal.wave;
-
-import java.awt.image.BufferedImage;
+package org.wingate.signal;
 
 /**
  *
  * @author util2
  */
-public class WaveformImageEvent {
-    private final int width;
-    private final int height;
-    private final BufferedImage image;
-
-    public WaveformImageEvent(int width, int height, BufferedImage image) {
-        this.width = width;
-        this.height = height;
-        this.image = image;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public BufferedImage getImage() {
-        return image;
-    }
+public interface SignalInterface {
+    public void getSignal(SignalImageEvent event);
 }

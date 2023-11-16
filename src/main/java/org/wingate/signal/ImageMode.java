@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.wingate.signal.spectrogram;
+package org.wingate.signal;
 
 /**
  *
  * @author util2
  */
-public interface SpectrogramInterface {
-    public void getImage(SpectrogramImageEvent event);
+public enum ImageMode {
+    WaveformOnly, SpectrogramOnly, Both;
 }

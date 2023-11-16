@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.wingate.signal.spectrogram;
+package org.wingate.signal;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -29,7 +30,6 @@ import javax.sound.sampled.AudioFormat;
 import javax.swing.event.EventListenerList;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
-import org.wingate.signal.SearchMode;
 
 /**
  * The computing about spectrogram comes from spectrogram by ozielcarneiro
@@ -38,7 +38,9 @@ import org.wingate.signal.SearchMode;
  * @author ozielcarneiro Oziel Carneiro
  * @see https://github.com/ozielcarneiro/spectrogram 
  */
-public class Spectrogram implements Runnable {
+public class SignalData implements Runnable {
+    
+    private ImageMode imageMode = ImageMode.WaveformOnly;
         
     private String path;    
     private volatile Thread execThread;
@@ -56,7 +58,7 @@ public class Spectrogram implements Runnable {
     private static final int NS = 256;
     private static final int SIZE = 4;
 
-    public Spectrogram(){
+    public SignalData(){
         path = null;
         execThread = null;
         msLastStart = 0L;
@@ -83,9 +85,12 @@ public class Spectrogram implements Runnable {
      * @param ms2 end time if absolute; duration time if relative
      * @param width width of result image if superior to 0 or signal based width specified by scale
      * @param height height of result or 100
+     * @param im
      * @param sm mode that can be ABSOLUTE or RELATIVE
      */
-    public void get(long ms1, long ms2, int width, int height, SearchMode sm){
+    public void get(long ms1, long ms2, int width, int height, ImageMode im, SearchMode sm){
+        imageMode = im;
+        
         long from = ms1;
         long to = ms2;
         
@@ -107,9 +112,9 @@ public class Spectrogram implements Runnable {
         execThread.start();
     }
     
-    public void get(long ms1, long ms2, float scale, SearchMode sm){
+    public void get(long ms1, long ms2, float scale, ImageMode im, SearchMode sm){
         this.scale = scale;
-        get(ms1, ms2, 0, 0, sm);
+        get(ms1, ms2, 0, 0, im, sm);
     }
     
     private void pleaseStop(){
@@ -124,7 +129,8 @@ public class Spectrogram implements Runnable {
         // Set value
         final int w = width != 0 ? width : 400;
         final int h = height != 0 ? height : 100;        
-        final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage imageW = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        final BufferedImage imageS = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         
         grabber.start();
                 
@@ -138,9 +144,12 @@ public class Spectrogram implements Runnable {
         }
         
         // Processing
-        Graphics2D g = image.createGraphics();
-        g.setColor(Color.black);
-        g.fillRect(0, 0, w, h);
+        Graphics2D gW = imageW.createGraphics();
+        gW.setColor(Color.black);
+        gW.fillRect(0, 0, w, h);
+        Graphics2D gS = imageS.createGraphics();
+        gS.setColor(Color.black);
+        gS.fillRect(0, 0, w, h);
         
         boolean stop = false;
         try {
@@ -163,23 +172,45 @@ public class Spectrogram implements Runnable {
                         outBuffer.putShort(val);
                     }
 
-                    draw(g, w, h, format, outBuffer.array(), msBetween);
+                    if(imageMode == ImageMode.Both || imageMode == ImageMode.WaveformOnly){
+                        drawWaveform(gW, w, h, format, outBuffer.array(), msBetween);
+                    }
+                    
+                    if(imageMode == ImageMode.Both || imageMode == ImageMode.SpectrogramOnly){
+                        drawSpectrogram(gS, w, h, format, outBuffer.array(), msBetween);
+                    }
+                    
                     stop = isEnd(format, msBetween, outBuffer.array().length);
                     
                     msBetween += outBuffer.array().length;
                 }
             }
         } catch (FFmpegFrameGrabber.Exception ex) {
-            Logger.getLogger(Spectrogram.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SignalData.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        g.dispose();
+        gW.dispose();
+        gS.dispose();
         
         grabber.stop();
         grabber.release();
         
         // Send to user by event listener
-        fireSpectrogramImage(new SpectrogramImageEvent(w, h, image));
+        SignalImageEvent sie = new SignalImageEvent();
+        
+        if(imageMode == ImageMode.Both || imageMode == ImageMode.WaveformOnly){
+            sie.setWaveformImage(imageW);
+            sie.setWaveformMsStart(msStart);
+            sie.setWaveformMsEnd(msStop);
+        }
+        
+        if(imageMode == ImageMode.Both || imageMode == ImageMode.SpectrogramOnly){
+            sie.setSpectrogramImage(imageS);
+            sie.setSpectrogramMsStart(msStart);
+            sie.setSpectrogramMsEnd(msStop);
+        }
+        
+        fireSignalImage(sie);
     }
     
     private double getX(long msStart, long msStop, int width, long msCurrent){
@@ -189,7 +220,68 @@ public class Spectrogram implements Runnable {
         return width - width * ratio;
     }
     
-    private void draw(Graphics2D g, int width, int height, AudioFormat format, byte[] samples, long elapsed){
+    private void drawWaveform(Graphics2D g, int width, int height, AudioFormat format, byte[] samples, long elapsed){
+        double x;
+        double y;
+        
+        // On tente une lecture
+        if(format.getSampleSizeInBits() == 16){
+            // en stéréo (16)
+            // On obtient le nombre de données à traiter
+            int samplesLength = samples.length / 2;
+            
+            // On traite le signal
+            if(format.isBigEndian()){
+                for(int i=0; i<samplesLength; i++){
+                    // Most significant bit, Low significant bit
+                    // First MSB (high order), second LSB (low order)
+                    int MSB = (int)samples[2*i];
+                    int LSB = (int)samples[2*i+1];
+                    int value = MSB << 8 | (255 & LSB);
+                    byte b = (byte)(128 * value / 32768);
+                    
+                    // Dessin
+                    double positionInSeconds = (elapsed + i+1) / Math.max(1L, format.getFrameSize() * format.getFrameRate());
+                    long msCurrent = Math.round(positionInSeconds * 1000L);
+                    x = getX(msStart, msStop, width, msCurrent);
+                    y = height * (128 - b) / 256;
+                    Line2D shape = new Line2D.Double(x, height/2, x, y);
+                    g.setColor(Color.red);
+                    g.draw(shape);
+                    
+                    // Is the end?
+                    if(isEnd(format, elapsed, i+1)){
+                        break;
+                    }
+                }
+            }else{
+                for(int i=0; i<samplesLength; i++){
+                    // Most significant bit, Low significant bit
+                    // First LSB (low order), second MSB (high order)
+                    int LSB = (int)samples[2*i];
+                    int MSB = (int)samples[2*i+1];
+                    int value = MSB << 8 | (255 & LSB);
+                    byte b = (byte)(128 * value / 32768);
+                    
+                    // Dessin
+                    double positionInSeconds = (elapsed + i+1) / Math.max(1L, format.getFrameSize() * format.getFrameRate());
+                    long msCurrent = Math.round(positionInSeconds * 1000L);
+                    x = getX(msStart, msStop, width, msCurrent);
+                    y = height * (128 - b) / 256;
+                    Line2D shape = new Line2D.Double(x, height/2, x, y);
+                    g.setColor(Color.red);
+                    g.draw(shape);
+                    
+                    // Is the end?
+                    if(isEnd(format, elapsed, i+1)){
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    private void drawSpectrogram(Graphics2D g, int width, int height, AudioFormat format, byte[] samples, long elapsed){
         double x;
         double y;
         
@@ -301,7 +393,7 @@ public class Spectrogram implements Runnable {
                 try {
                     createImage();
                 } catch (FFmpegFrameGrabber.Exception ex) {
-                    Logger.getLogger(Spectrogram.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(SignalData.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 pleaseStop();
             }
@@ -310,22 +402,22 @@ public class Spectrogram implements Runnable {
     
     private final EventListenerList listeners = new EventListenerList();
     
-    public void addSpectrogramListener(SpectrogramInterface listener){
-        listeners.add(SpectrogramListener.class, (SpectrogramListener)listener);
+    public void addSignalListener(SignalInterface listener){
+        listeners.add(SignalListener.class, (SignalListener)listener);
     }
     
-    public void removeSpectrogramListener(SpectrogramInterface listener){
-        listeners.remove(SpectrogramListener.class, (SpectrogramListener)listener);
+    public void removeSignalListener(SignalInterface listener){
+        listeners.remove(SignalListener.class, (SignalListener)listener);
     }
     
     public Object[] getListeners(){
         return listeners.getListenerList();
     }
     
-    protected void fireSpectrogramImage(SpectrogramImageEvent event){
+    protected void fireSignalImage(SignalImageEvent event){
         for(Object o : getListeners()){
-            if(o instanceof SpectrogramListener listen){
-                listen.getImage(event);
+            if(o instanceof SignalListener listen){
+                listen.getSignal(event);
                 break;
             }
         }

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.wingate.signal.spectrogram;
+package org.wingate.signal;
 
 import java.util.EventListener;
 
@@ -22,6 +22,6 @@ import java.util.EventListener;
  *
  * @author util2
  */
-public abstract class SpectrogramListener implements EventListener, SpectrogramInterface {
+public abstract class SignalListener implements EventListener, SignalInterface {
     // Just implements EventListener
 }

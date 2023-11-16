@@ -6,21 +6,23 @@ Signal is a library that have ready to use components.
 
 For video and audio in a player (a simple panel), use Media with VideoView.
 
-To generate piece of waveform use Waveform class and listener like this:
+To generate piece of waveform use this class and listener like this:
 ```java
-Waveform wf = new Waveform();
-wf.addWaveformListener(new WaveformListener(){
+SignalData signalData = new SignalData();
+signalData.addSignalListener(new SignalListener(){
     @Override
-    public void getImage(WaveformImageEvent event) {
+    public void getSignal(SignalImageEvent event) {
         try {
-            ImageIO.write(event.getImage(), "png", new File("your/path/to/png"));
+            if(event.hasWaveform()){
+                ImageIO.write(event.getWaveformImage(), "png", new File("your/path/to/png"));
+            }
         } catch (IOException ex) {
             Logger.getLogger(Signal.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }        
+    }
 });
-wf.setMediaFile("your/path/to/media/to/view/in/the/waveform");
-wf.get(0L, 10000L, 800, 200, SearchMode.Absolute);
+signalData.setMediaFile("your/path/to/media/to/view/in/the/waveform");
+signalData.get(0L, 10000L, 800, 200, ImageMode.WaveformOnly, SearchMode.Absolute);
 ```
 The last function 'get' has the following features:
 
@@ -30,21 +32,23 @@ The last function 'get' has the following features:
 
 If RELATIVE, 'msStartRel' is calculated from last 'msStart' position.
 
-To generate piece of spectrogram use Spectrogram class and listener like this:
+To generate piece of spectrogram use this class and listener like this:
 ```java
-Spectrogram sp = new Spectrogram();
-sp.addSpectrogramListener(new SpectrogramListener(){
+SignalData signalData = new SignalData();
+signalData.addSignalListener(new SignalListener(){
     @Override
-    public void getImage(SpectrogramImageEvent event) {
+    public void getSignal(SignalImageEvent event) {
         try {
-            ImageIO.write(event.getImage(), "png", new File("your/path/to/png"));
+            if(event.hasSpectrogram()){
+                ImageIO.write(event.getSpectrogramImage(), "png", new File("your/path/to/png"));
+            }
         } catch (IOException ex) {
             Logger.getLogger(Signal.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }        
+    }
 });
-sp.setMediaFile("your/path/to/media/to/view/in/the/spectrogram");
-sp.get(0L, 10000L, 800, 260, SearchMode.Absolute);
+signalData.setMediaFile("your/path/to/media/to/view/in/the/spectrogram");
+signalData.get(0L, 10000L, 800, 260, ImageMode.SpectrogramOnly, SearchMode.Absolute);
 ```
 
 | Example: (Gin & Juice.m4a from 0s to 10s) |

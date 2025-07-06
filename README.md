@@ -56,3 +56,6 @@ signalData.get(0L, 10000L, 800, 260, ImageMode.SpectrogramOnly, SearchMode.Absol
 | ![Gin & Juice.m4a from 0s to 10s.](https://github.com/TW2/signal/blob/main/data/essai.png) |
 | ![Gin & Juice.m4a from 0s to 10s.](https://github.com/TW2/signal/blob/main/data/essai2.png) |
 
+You can join me on Discord to speak or idle, in English or French (cause I'm a half white black Frenchy).
+
+[![Discord](https://github.com/user-attachments/assets/99ec6536-7624-41c1-afd1-7993fc4a1e25)](https://discord.gg/ef8xvA9wsF)
